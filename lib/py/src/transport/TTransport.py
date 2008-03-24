@@ -232,16 +232,15 @@ class TFramedTransport(TTransportBase):
 
   """Class that wraps another transport and frames its I/O when writing."""
 
+  # Only used if framing is not used for reading or writing.
+  DEFAULT_BUFFER = 4096
+
   def __init__(self, trans, read=True, write=True):
     self.__trans = trans
-    if read:
-      self.__rbuf = StringIO()
-    else:
-      self.__rbuf = None
-    if write:
-      self.__wbuf = StringIO()
-    else:
-      self.__wbuf = None
+    self.__read = read
+    self.__write = write
+    self.__rbuf = StringIO()
+    self.__wbuf = StringIO()
 
   def isOpen(self):
     return self.__trans.isOpen()
@@ -253,9 +252,6 @@ class TFramedTransport(TTransportBase):
     return self.__trans.close()
 
   def read(self, sz):
-    if self.__rbuf == None:
-      return self.__trans.read(sz)
-
     ret = self.__rbuf.read(sz)
     if len(ret) != 0:
       return ret
@@ -264,25 +260,27 @@ class TFramedTransport(TTransportBase):
     return self.__rbuf.read(sz)
 
   def readFrame(self):
-    buff = self.__trans.readAll(4)
-    sz, = unpack('!i', buff)
-    self.__rbuf = StringIO(self.__trans.readAll(sz))
+    if self.__read:
+      buff = self.__trans.readAll(4)
+      sz, = unpack('!i', buff)
+      self.__rbuf = StringIO(self.__trans.readAll(sz))
+    else:
+      self.__rbuf = StringIO(self.__trans.read(self.DEFAULT_BUFFER))
 
   def write(self, buf):
-    if self.__wbuf == None:
-      return self.__trans.write(buf)
     self.__wbuf.write(buf)
 
   def flush(self):
-    if self.__wbuf == None:
-      return self.__trans.flush()
     wout = self.__wbuf.getvalue()
-    wsz = len(wout)
-    # N.B.: Doing this string concatenation is WAY cheaper than making
-    # two separate calls to the underlying socket object. Socket writes in
-    # Python turn out to be REALLY expensive, but it seems to do a pretty
-    # good job of managing string buffer operations without excessive copies
-    buf = pack("!i", wsz) + wout
+    if self.__write:
+      wsz = len(wout)
+      # N.B.: Doing this string concatenation is WAY cheaper than making
+      # two separate calls to the underlying socket object. Socket writes in
+      # Python turn out to be REALLY expensive, but it seems to do a pretty
+      # good job of managing string buffer operations without excessive copies
+      buf = pack("!i", wsz) + wout
+    else:
+      buf = wout
     self.__trans.write(buf)
     self.__trans.flush()
     self.__wbuf = StringIO()
