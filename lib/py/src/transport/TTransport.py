@@ -235,7 +235,7 @@ class TFramedTransport(TTransportBase):
   def __init__(self, trans, read=True, write=True):
     self.__trans = trans
     if read:
-      self.__rbuf = ''
+      self.__rbuf = StringIO()
     else:
       self.__rbuf = None
     if write:
@@ -255,17 +255,18 @@ class TFramedTransport(TTransportBase):
   def read(self, sz):
     if self.__rbuf == None:
       return self.__trans.read(sz)
-    if len(self.__rbuf) == 0:
-      self.readFrame()
-    give = min(len(self.__rbuf), sz)
-    buff = self.__rbuf[0:give]
-    self.__rbuf = self.__rbuf[give:]
-    return buff
+
+    ret = self.__rbuf.read(sz)
+    if len(ret) != 0:
+      return ret
+
+    self.readFrame()
+    return self.__rbuf.read(sz)
 
   def readFrame(self):
     buff = self.__trans.readAll(4)
     sz, = unpack('!i', buff)
-    self.__rbuf = self.__trans.readAll(sz)
+    self.__rbuf = StringIO(self.__trans.readAll(sz))
 
   def write(self, buf):
     if self.__wbuf == None:
