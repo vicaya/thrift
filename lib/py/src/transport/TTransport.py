@@ -228,7 +228,7 @@ class TFramedTransportFactory:
     return framed
 
 
-class TFramedTransport(TTransportBase):
+class TFramedTransport(TTransportBase,CReadableTransport):
 
   """Class that wraps another transport and frames its I/O when writing."""
 
@@ -284,3 +284,16 @@ class TFramedTransport(TTransportBase):
     self.__trans.write(buf)
     self.__trans.flush()
     self.__wbuf = StringIO()
+
+  # Implement the CReadableTransport interface.
+  @property
+  def cstringio_buf(self):
+    return self.__rbuf
+
+  def cstringio_refill(self, partialread, reqlen):
+    readFrame()
+    new_buffer = partialread + self.__rbuf.getvalue()
+    if len(new_buffer) < reqlen:
+      raise EOFError()
+    self.__rbuf = StringIO(new_buffer)
+    return self.__rbuf
