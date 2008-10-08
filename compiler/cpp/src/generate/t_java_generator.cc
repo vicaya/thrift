@@ -590,10 +590,6 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     }
     out << declare_field(*m_iter, false) << endl;
 
-    // std::string const_name = (*m_iter)->get_name();
-    // for (int i = 0; i < const_name.length(); i++) {
-    //   const_name[i] = toupper(const_name[i]);
-    // }
     indent(out) << "public static final int " << upcase_string((*m_iter)->get_name()) << " = " << (*m_iter)->get_key() << ";" << endl;
   }
 
@@ -1091,8 +1087,10 @@ void t_java_generator::generate_generic_field_getters_setters(std::ofstream& out
       cap_name[0] = toupper(cap_name[0]);
     }
 
+    indent_up();
     generate_reflection_setters(setter_stream, type, field_name, cap_name);
     generate_reflection_getters(getter_stream, type, field_name, cap_name);
+    indent_down();
   }
 
 
