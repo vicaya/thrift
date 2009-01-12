@@ -289,22 +289,19 @@ void t_html_generator::generate_index() {
 void t_html_generator::generate_css() {
   string css_fname = get_out_dir() + "style.css";
   f_out_.open(css_fname.c_str());
-  f_out_ << "/* Auto-generated CSS for generated Thrift docs */" << endl;
-  f_out_ <<
-    "body { font-family: Tahoma, sans-serif; }" << endl;
-  f_out_ <<
-    "pre { background-color: #dddddd; padding: 6px; }" << endl;
-  f_out_ <<
-    "h3,h4 { padding-top: 0px; margin-top: 0px; }" << endl;
-  f_out_ <<
-    "div.definition { border: 1px solid gray; margin: 10px; padding: 10px; }" << endl;
-  f_out_ <<
-    "table { border: 1px solid grey; border-collapse: collapse; }" << endl;
-  f_out_ <<
-    "td { border: 1px solid grey; padding: 1px 6px; vertical-align: top; }" << endl;
-  f_out_ <<
-    "th { border: 1px solid black; background-color: #bbbbbb;" << endl <<
-    "     text-align: left; padding: 1px 6px; }" << endl;
+  f_out_ << "/* Auto-generated CSS for generated Thrift docs */\n"
+         << "body { font-family: Tahoma, sans-serif; }\n"
+         << "pre { background-color: #dddddd; padding: 6px; }\n"
+         << "h3,h4 { padding-top: 0px; margin-top: 0px; }\n"
+         << "div.definition { border: 1px solid gray; margin: 10px; "
+            "padding: 10px; }\n"
+         << "div.extends { margin: -0.5em 0 1em 5em }\n"
+         << "table { border: 1px solid grey; border-collapse: collapse; }\n"
+         << "td { border: 1px solid grey; padding: 1px 6px; "
+            "vertical-align: top; }\n"
+         << "th { border: 1px solid black; background-color: #bbbbbb; "
+            "text-align: left; padding: 1px 6px; }"
+         << endl;
   f_out_.close();
 }
 
@@ -367,6 +364,8 @@ int t_html_generator::print_type(t_type* ttype) {
       f_out_ << "Struct_";
     } else if (ttype->is_enum()) {
       f_out_ << "Enum_";
+    } else if (ttype->is_service()) {
+      f_out_ << "Svc_";
     }
     f_out_ << type_name << "\">";
     len = type_name.size();
@@ -552,6 +551,12 @@ void t_html_generator::generate_xception(t_struct* txception) {
 void t_html_generator::generate_service(t_service* tservice) {
   f_out_ << "<h3 id=\"Svc_" << service_name_ << "\">Service: "
 	 << service_name_ << "</h3>" << endl;
+
+  if (tservice->get_extends()) {
+    f_out_ << "<div class=\"extends\"><em>extends</em> ";
+    print_type(tservice->get_extends());
+    f_out_ << "</div>\n";
+  }
   print_doc(tservice);
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator fn_iter = functions.begin();
